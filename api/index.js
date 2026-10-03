@@ -1,7 +1,3 @@
-export const config = {
-  runtime: 'nodejs20.x',
-};
-
 const BASE_URL = 'https://cx.indianoil.in';
 const PAGE_URL = `${BASE_URL}/EPICIOCL/faces/GrievanceMainPage.jspx`;
 const TIMEOUT = 25000;
@@ -18,11 +14,8 @@ const DEFAULT_HEADERS = {
   'X-Requested-With': 'org.telegram.messenger',
 };
 
-// ── Cookie jar ─────────────────────────────────────────────────────
-
 class CookieJar {
-  constructor(host) {
-    this.host = host;
+  constructor() {
     this.cookies = new Map();
   }
   set(name, value) {
@@ -51,8 +44,6 @@ class CookieJar {
     }
   }
 }
-
-// ── HTTP helpers ───────────────────────────────────────────────────
 
 async function httpRequest(url, { method = 'GET', body = null, extraHeaders = {}, jar = null } = {}) {
   const headers = { ...DEFAULT_HEADERS, ...extraHeaders };
@@ -83,8 +74,6 @@ async function httpRequest(url, { method = 'GET', body = null, extraHeaders = {}
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
-
-// ── ADF parsing helpers ────────────────────────────────────────────
 
 function parseLoopback(html) {
   const m = html.match(/AdfLoopbackUtils\.runLoopback\((.*?)\);/s);
@@ -145,11 +134,9 @@ function parseRedirectCookies(xml, jar) {
   }
 }
 
-// ── Fetcher ────────────────────────────────────────────────────────
-
 class IOCLFetcher {
   constructor() {
-    this.jar = new CookieJar('cx.indianoil.in');
+    this.jar = new CookieJar();
     this.windowId = null;
     this.viewState = null;
     this.pageId = null;
@@ -275,8 +262,6 @@ class IOCLFetcher {
   }
 }
 
-// ── HTML parsing ───────────────────────────────────────────────────
-
 function decodeEntities(str) {
   if (!str) return '';
   return str
@@ -287,6 +272,10 @@ function decodeEntities(str) {
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ')
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)));
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function extractSpan(html, spanId) {
@@ -309,10 +298,6 @@ function extractSelectValue(html, selectId) {
   const opt = m[1].match(/<option[^>]*selected[^>]*>(.*?)<\/option>/s);
   if (!opt) return '';
   return decodeEntities(opt[1].replace(/<[^>]+>/g, '').trim());
-}
-
-function escapeRegex(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function parseResults(html) {
@@ -357,8 +342,6 @@ function parseResults(html) {
 
   return result;
 }
-
-// ── Serverless handler ─────────────────────────────────────────────
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -459,4 +442,4 @@ export default async function handler(req, res) {
       message,
     });
   }
-      }
+}
